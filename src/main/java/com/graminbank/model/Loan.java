@@ -9,6 +9,8 @@ import org.hibernate.annotations.GenericGenerator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -37,7 +39,7 @@ public class Loan {
     @Column(name = "interest_rate", nullable = false, precision = 5, scale = 2)
     private BigDecimal interestRate = new BigDecimal("5.0");
 
-    @Column(name = "financial_year", nullable = false, length = 4)
+    @Column(name = "financial_year", nullable = false, length = 10)
     private String financialYear;
 
     @Column(name = "status", nullable = false, length = 20)
@@ -52,14 +54,40 @@ public class Loan {
     @Column(name = "total_repayment", precision = 12, scale = 2)
     private BigDecimal totalRepayment = BigDecimal.ZERO;
 
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "paid_amount", precision = 12, scale = 2)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @Column(name = "remaining_amount", precision = 12, scale = 2)
+    private BigDecimal remainingAmount = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "carried_forward_from")
+    private Loan carriedForwardFrom;
+
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LoanPayment> payments = new ArrayList<>();
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
         if (financialYear == null) {
-            financialYear = String.valueOf(LocalDate.now().getYear());
+            financialYear = com.graminbank.util.InterestCalculator.getCurrentFinancialYear();
         }
+        remainingAmount = loanAmount;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

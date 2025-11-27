@@ -29,14 +29,11 @@ public class Member {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "phone", nullable = false, length = 15)
+    @Column(name = "phone", length = 15)  // Optional, duplicates allowed
     private String phone;
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
-
-    @Column(name = "aadhar_number", length = 20)
-    private String aadharNumber;
 
     @Column(name = "joining_date", nullable = false)
     private LocalDate joiningDate;

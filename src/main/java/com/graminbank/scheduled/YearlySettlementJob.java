@@ -14,18 +14,25 @@ public class YearlySettlementJob {
     private final SettlementService settlementService;
 
     /**
-     * Runs every December 31 at 23:59
+     * Runs every March 31 at 23:59
      * Cron: second minute hour day month day-of-week
      */
-    @Scheduled(cron = "0 59 23 31 12 ?")
+    @Scheduled(cron = "0 59 23 31 3 ?", zone = "Asia/Kolkata")
     public void performYearlySettlement() {
-        log.info("Starting yearly settlement process...");
+        log.info("=== Starting Yearly Settlement Job (March 31) ===");
 
         try {
             settlementService.settleFinancialYear();
-            log.info("Yearly settlement completed successfully");
+            log.info("=== Yearly Settlement Completed Successfully ===");
         } catch (Exception e) {
             log.error("Error during yearly settlement: {}", e.getMessage(), e);
         }
     }
+
+    // For testing: runs every day at midnight (uncomment for testing)
+    // @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Kolkata")
+    // public void testSettlement() {
+    //     log.info("Test settlement triggered");
+    //     settlementService.settleFinancialYear();
+    // }
 }

@@ -1,8 +1,9 @@
 package com.graminbank.controller;
 
 import com.graminbank.dto.request.DepositRequest;
+import com.graminbank.dto.request.DepositReturnRequest;
+import com.graminbank.dto.request.DepositUpdateRequest;
 import com.graminbank.dto.response.DepositResponse;
-import com.graminbank.exception.ResourceNotFoundException;
 import com.graminbank.service.DepositService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/deposits")
@@ -28,13 +31,36 @@ public class AdminDepositController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<DepositResponse> getDepositById(@PathVariable UUID id) {
+        DepositResponse response = depositService.getDepositById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DepositResponse> updateDeposit(
+            @PathVariable UUID id,
+            @Valid @RequestBody DepositUpdateRequest request) {
+        DepositResponse response = depositService.updateDeposit(id, request);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     public ResponseEntity<Page<DepositResponse>> getDeposits(
+            @RequestParam(defaultValue = "ACTIVE") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<DepositResponse> deposits = depositService.getActiveDeposits(
-                PageRequest.of(page, size)
+        Page<DepositResponse> deposits = depositService.getDepositsByStatus(
+                status, PageRequest.of(page, size)
         );
         return ResponseEntity.ok(deposits);
+    }
+
+    @PutMapping("/{id}/return")
+    public ResponseEntity<DepositResponse> returnDeposit(
+            @PathVariable UUID id,
+            @Valid @RequestBody DepositReturnRequest request) {
+        DepositResponse response = depositService.returnDeposit(id, request.getReturnDate());
+        return ResponseEntity.ok(response);
     }
 }

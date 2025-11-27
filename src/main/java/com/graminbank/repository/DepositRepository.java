@@ -21,6 +21,8 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
 
     Page<Deposit> findByStatus(String status, Pageable pageable);
 
+    List<Deposit> findByStatus(String status);
+
     @Query("SELECT COALESCE(SUM(d.amount), 0) FROM Deposit d WHERE d.status = :status")
     BigDecimal getTotalDepositsByStatus(@Param("status") String status);
 

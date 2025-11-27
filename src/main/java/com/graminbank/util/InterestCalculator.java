@@ -7,19 +7,14 @@ import java.time.temporal.ChronoUnit;
 
 public class InterestCalculator {
 
-    private static final BigDecimal DEPOSIT_YEARLY_RATE = new BigDecimal("30"); // 2.5% monthly = 30% yearly
-    private static final BigDecimal LOAN_YEARLY_RATE = new BigDecimal("60"); // 5% monthly = 60% yearly
+    private static final BigDecimal DEPOSIT_MONTHLY_RATE = new BigDecimal("2.5");
+    private static final BigDecimal LOAN_MONTHLY_RATE = new BigDecimal("5.0");
     private static final BigDecimal HUNDRED = new BigDecimal("100");
-    private static final BigDecimal DAYS_IN_YEAR = new BigDecimal("365");
 
     /**
-     * Calculate deposit interest using simple interest formula
-     * Formula: (Principal × 30% × Days) / (100 × 365)
-     *
-     * @param principal The principal amount
-     * @param startDate The deposit start date
-     * @param endDate The settlement/end date
-     * @return The calculated interest amount
+     * Calculate deposit interest on monthly basis
+     * 1-30 days = 1 month, 31-60 days = 2 months, etc.
+     * Formula: (Principal × Rate × Months) / 100
      */
     public static BigDecimal calculateDepositInterest(BigDecimal principal, LocalDate startDate, LocalDate endDate) {
         if (principal == null || startDate == null || endDate == null) {
@@ -31,25 +26,23 @@ public class InterestCalculator {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal daysBd = new BigDecimal(days);
+        // Calculate months: 1-30 days = 1 month, 31-60 = 2 months, etc.
+        int months = (int) Math.ceil(days / 30.0);
+        BigDecimal monthsBd = new BigDecimal(months);
 
-        // (P × R × T) / (100 × 365)
+        // (P × R × M) / 100
         BigDecimal interest = principal
-                .multiply(DEPOSIT_YEARLY_RATE)
-                .multiply(daysBd)
-                .divide(HUNDRED.multiply(DAYS_IN_YEAR), 2, RoundingMode.HALF_UP);
+                .multiply(DEPOSIT_MONTHLY_RATE)
+                .multiply(monthsBd)
+                .divide(HUNDRED, 2, RoundingMode.HALF_UP);
 
         return interest;
     }
 
     /**
-     * Calculate loan interest using simple interest formula
-     * Formula: (Principal × 60% × Days) / (100 × 365)
-     *
-     * @param principal The loan principal amount
-     * @param startDate The loan start date
-     * @param endDate The repayment/settlement date
-     * @return The calculated interest amount
+     * Calculate loan interest on monthly basis
+     * 1-30 days = 1 month, 31-60 days = 2 months, etc.
+     * Formula: (Principal × Rate × Months) / 100
      */
     public static BigDecimal calculateLoanInterest(BigDecimal principal, LocalDate startDate, LocalDate endDate) {
         if (principal == null || startDate == null || endDate == null) {
@@ -61,14 +54,47 @@ public class InterestCalculator {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal daysBd = new BigDecimal(days);
+        // Calculate months: 1-30 days = 1 month, 31-60 = 2 months, etc.
+        int months = (int) Math.ceil(days / 30.0);
+        BigDecimal monthsBd = new BigDecimal(months);
 
-        // (P × R × T) / (100 × 365)
+        // (P × R × M) / 100
         BigDecimal interest = principal
-                .multiply(LOAN_YEARLY_RATE)
-                .multiply(daysBd)
-                .divide(HUNDRED.multiply(DAYS_IN_YEAR), 2, RoundingMode.HALF_UP);
+                .multiply(LOAN_MONTHLY_RATE)
+                .multiply(monthsBd)
+                .divide(HUNDRED, 2, RoundingMode.HALF_UP);
 
         return interest;
+    }
+
+    /**
+     * Get current financial year in format "2024-25"
+     */
+    public static String getCurrentFinancialYear() {
+        LocalDate today = LocalDate.now();
+        int year = today.getYear();
+        int month = today.getMonthValue();
+
+        if (month >= 4) {
+            // April to December: current year to next year
+            return year + "-" + String.format("%02d", (year + 1) % 100);
+        } else {
+            // January to March: previous year to current year
+            return (year - 1) + "-" + String.format("%02d", year % 100);
+        }
+    }
+
+    /**
+     * Get financial year from a specific date
+     */
+    public static String getFinancialYearFromDate(LocalDate date) {
+        int year = date.getYear();
+        int month = date.getMonthValue();
+
+        if (month >= 4) {
+            return year + "-" + String.format("%02d", (year + 1) % 100);
+        } else {
+            return (year - 1) + "-" + String.format("%02d", year % 100);
+        }
     }
 }

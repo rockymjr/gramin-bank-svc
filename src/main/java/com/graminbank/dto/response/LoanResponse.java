@@ -17,4 +17,15 @@ public class LoanResponse {
     private LocalDate returnDate;
     private BigDecimal interestAmount;
     private BigDecimal totalRepayment;
+    private Boolean carriedForward;
+
+    // Payment tracking
+    private BigDecimal paidAmount;
+    private BigDecimal discountAmount;
+    private BigDecimal remainingAmount;
+
+    // For active loans - current interest till today
+    private BigDecimal currentInterest;
+    private BigDecimal currentTotal;
+    private BigDecimal currentRemaining;
 }

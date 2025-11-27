@@ -1,6 +1,7 @@
 package com.graminbank.dto.request;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,10 +9,9 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
-public class LoanRequest {
+public class LoanUpdateRequest {
 
-    @NotNull(message = "Member ID is required")
-    private UUID memberId;
+    private UUID memberId;  // Optional - to change member
 
     @NotNull(message = "Loan amount is required")
     @DecimalMin(value = "0.01", message = "Loan amount must be greater than 0")

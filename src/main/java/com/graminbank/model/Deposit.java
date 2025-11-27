@@ -1,6 +1,5 @@
 package com.graminbank.model;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,7 +29,7 @@ public class Deposit {
     private Member member;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+    private BigDecimal amount;  // No min/max constraint
 
     @Column(name = "deposit_date", nullable = false)
     private LocalDate depositDate;
@@ -38,14 +37,14 @@ public class Deposit {
     @Column(name = "interest_rate", nullable = false, precision = 5, scale = 2)
     private BigDecimal interestRate = new BigDecimal("2.5");
 
-    @Column(name = "financial_year", nullable = false, length = 4)
+    @Column(name = "financial_year", nullable = false, length = 10)
     private String financialYear;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE";
 
-    @Column(name = "settled_date")
-    private LocalDate settledDate;
+    @Column(name = "return_date")
+    private LocalDate returnDate;
 
     @Column(name = "interest_earned", precision = 12, scale = 2)
     private BigDecimal interestEarned = BigDecimal.ZERO;
@@ -56,11 +55,20 @@ public class Deposit {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
         if (financialYear == null) {
-            financialYear = String.valueOf(LocalDate.now().getYear());
+            financialYear = com.graminbank.util.InterestCalculator.getCurrentFinancialYear();
         }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

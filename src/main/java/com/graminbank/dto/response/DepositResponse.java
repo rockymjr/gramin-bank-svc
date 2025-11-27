@@ -14,6 +14,11 @@ public class DepositResponse {
     private BigDecimal amount;
     private LocalDate depositDate;
     private String status;
+    private LocalDate returnDate;
     private BigDecimal interestEarned;
     private BigDecimal totalAmount;
+
+    // For active deposits - current interest till today
+    private BigDecimal currentInterest;
+    private BigDecimal currentTotal;
 }

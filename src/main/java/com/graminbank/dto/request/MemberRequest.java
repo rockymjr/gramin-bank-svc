@@ -1,6 +1,5 @@
 package com.graminbank.dto.request;
 
-
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -15,12 +14,13 @@ public class MemberRequest {
     @Size(max = 100)
     private String lastName;
 
-    @NotBlank(message = "Phone is required")
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
-    private String phone;
+    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits",
+            groups = ValidationGroups.PhoneValidation.class)
+    private String phone;  // Optional, no validation if empty
 
     private String address;
 
-    @Pattern(regexp = "^[0-9]{4}-[0-9]{4}-[0-9]{4}$", message = "Invalid Aadhar format")
-    private String aadharNumber;
+    public interface ValidationGroups {
+        interface PhoneValidation {}
+    }
 }

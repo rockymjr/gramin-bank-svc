@@ -8,14 +8,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-public class LoanClosureRequest {
+public class LoanPaymentRequest {
 
-    @NotNull(message = "Return date is required")
-    private LocalDate returnDate;
+    @NotNull(message = "Payment amount is required")
+    @DecimalMin(value = "0.01", message = "Payment amount must be greater than 0")
+    private BigDecimal paymentAmount;
+
+    @NotNull(message = "Payment date is required")
+    private LocalDate paymentDate;
 
     @DecimalMin(value = "0", message = "Discount cannot be negative")
     private BigDecimal discountAmount;
 
-    @DecimalMin(value = "0.01", message = "Payment amount must be greater than 0")
-    private BigDecimal paymentAmount;
+    private String notes;
 }

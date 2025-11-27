@@ -21,6 +21,8 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
 
     Page<Loan> findByStatus(String status, Pageable pageable);
 
+    List<Loan> findByStatus(String status);
+
     @Query("SELECT COALESCE(SUM(l.loanAmount), 0) FROM Loan l WHERE l.status = :status")
     BigDecimal getTotalLoansByStatus(@Param("status") String status);
 
