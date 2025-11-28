@@ -1,5 +1,6 @@
 package com.graminbank.model;
 
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,8 +30,11 @@ public class Member {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "phone", length = 15)  // Optional, duplicates allowed
+    @Column(name = "phone", length = 15)
     private String phone;
+
+    @Column(name = "pin", length = 4)  // NEW FIELD
+    private String pin;
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;

@@ -30,6 +30,7 @@ public class MemberService {
         member.setFirstName(request.getFirstName());
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
+        member.setPin(request.getPin());  // NEW
         member.setAddress(request.getAddress());
         member.setJoiningDate(LocalDate.now());
         member.setIsActive(true);
@@ -66,6 +67,7 @@ public class MemberService {
         member.setFirstName(request.getFirstName());
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
+        member.setPin(request.getPin());  // NEW
         member.setAddress(request.getAddress());
         Member updatedMember = memberRepository.save(member);
         return convertToResponse(updatedMember);

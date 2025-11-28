@@ -25,18 +25,16 @@ public class PublicController {
 
     @GetMapping("/deposits")
     public ResponseEntity<Page<MaskedDepositResponse>> getDeposits(
-            @RequestParam(defaultValue = "ACTIVE") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<MaskedDepositResponse> deposits = publicService.getMaskedDeposits(
-                 PageRequest.of(page, size)
+                PageRequest.of(page, size)
         );
         return ResponseEntity.ok(deposits);
     }
 
     @GetMapping("/loans")
     public ResponseEntity<Page<MaskedLoanResponse>> getLoans(
-            @RequestParam(defaultValue = "ACTIVE") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<MaskedLoanResponse> loans = publicService.getMaskedLoans(
