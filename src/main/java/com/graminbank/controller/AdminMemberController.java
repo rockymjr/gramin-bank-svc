@@ -17,12 +17,13 @@ import java.util.UUID;
 @RequestMapping("/api/admin/members")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
 public class AdminMemberController {
 
     private final MemberService memberService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody MemberRequest request) {
         MemberResponse response = memberService.createMember(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -44,6 +45,7 @@ public class AdminMemberController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MemberResponse> updateMember(
             @PathVariable UUID id,
             @Valid @RequestBody MemberRequest request) {
@@ -52,6 +54,7 @@ public class AdminMemberController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateMember(@PathVariable UUID id) {
         memberService.deactivateMember(id);
         return ResponseEntity.noContent().build();

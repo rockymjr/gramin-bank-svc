@@ -20,12 +20,13 @@ import java.util.UUID;
 @RequestMapping("/api/admin/deposits")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
 public class AdminDepositController {
 
     private final DepositService depositService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepositResponse> createDeposit(@Valid @RequestBody DepositRequest request) {
         DepositResponse response = depositService.createDeposit(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -38,6 +39,7 @@ public class AdminDepositController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepositResponse> updateDeposit(
             @PathVariable UUID id,
             @Valid @RequestBody DepositUpdateRequest request) {
@@ -57,6 +59,7 @@ public class AdminDepositController {
     }
 
     @PutMapping("/{id}/return")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepositResponse> returnDeposit(
             @PathVariable UUID id,
             @Valid @RequestBody DepositReturnRequest request) {

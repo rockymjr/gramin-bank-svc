@@ -23,12 +23,13 @@ import java.util.UUID;
 @RequestMapping("/api/admin/loans")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
 public class AdminLoanController {
 
     private final LoanService loanService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LoanResponse> createLoan(@Valid @RequestBody LoanRequest request) {
         LoanResponse response = loanService.createLoan(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -41,6 +42,7 @@ public class AdminLoanController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LoanResponse> updateLoan(
             @PathVariable UUID id,
             @Valid @RequestBody LoanUpdateRequest request) {
@@ -60,6 +62,7 @@ public class AdminLoanController {
     }
 
     @PostMapping("/{id}/payments")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LoanPaymentResponse> addPayment(
             @PathVariable UUID id,
             @Valid @RequestBody LoanPaymentRequest request) {
@@ -74,6 +77,7 @@ public class AdminLoanController {
     }
 
     @PutMapping("/{id}/close")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LoanResponse> closeLoan(
             @PathVariable UUID id,
             @Valid @RequestBody LoanClosureRequest request) {
