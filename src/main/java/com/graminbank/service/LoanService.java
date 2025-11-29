@@ -267,7 +267,6 @@ public class LoanService {
         newLoan.setInterestRate(new BigDecimal("5.0"));
         newLoan.setFinancialYear(newFinancialYear);
         newLoan.setStatus("ACTIVE");
-        newLoan.setCarriedForwardFrom(oldLoan);
         newLoan.setRemainingAmount(newLoanAmount);
 
         return loanRepository.save(newLoan);
@@ -284,7 +283,6 @@ public class LoanService {
         response.setReturnDate(loan.getReturnDate());
         response.setInterestAmount(loan.getInterestAmount());
         response.setTotalRepayment(loan.getTotalRepayment());
-        response.setCarriedForward(loan.getCarriedForwardFrom() != null);
         response.setPaidAmount(loan.getPaidAmount());
         response.setDiscountAmount(loan.getDiscountAmount());
         response.setRemainingAmount(loan.getRemainingAmount());

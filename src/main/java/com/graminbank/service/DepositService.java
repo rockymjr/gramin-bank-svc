@@ -151,6 +151,7 @@ public class DepositService {
         response.setInterestEarned(deposit.getInterestEarned());
         response.setTotalAmount(deposit.getTotalAmount());
         response.setReturnDate(deposit.getReturnDate());
+        response.setInterestRate(deposit.getInterestRate());
         return response;
     }
 

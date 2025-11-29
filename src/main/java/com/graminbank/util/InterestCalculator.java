@@ -3,6 +3,7 @@ package com.graminbank.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 
 public class InterestCalculator {
@@ -95,6 +96,41 @@ public class InterestCalculator {
             return year + "-" + String.format("%02d", (year + 1) % 100);
         } else {
             return (year - 1) + "-" + String.format("%02d", year % 100);
+        }
+    }
+
+    /**
+     * Calculates the difference between startDate and endDate in months and days.
+     *
+     * @param startDate depositDate / loanDate
+     * @param endDate currentDate or returnDate
+     * @return months and days difference
+     */
+    public static DurationResult calculateDuration(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            return new DurationResult(0, 0);
+        }
+
+        Period period = Period.between(startDate, endDate);
+
+        // Convert years to months + existing months
+        int totalMonths = period.getYears() * 12 + period.getMonths();
+
+        return new DurationResult(totalMonths, period.getDays());
+    }
+
+    public static class DurationResult {
+        public int months;
+        public int days;
+
+        public DurationResult(int months, int days) {
+            this.months = months;
+            this.days = days;
+        }
+
+        @Override
+        public String toString() {
+            return months + " months, " + days + " days";
         }
     }
 }

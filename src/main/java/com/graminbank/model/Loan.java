@@ -1,5 +1,6 @@
 package com.graminbank.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -63,11 +64,8 @@ public class Loan {
     @Column(name = "remaining_amount", precision = 12, scale = 2)
     private BigDecimal remainingAmount = BigDecimal.ZERO;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "carried_forward_from")
-    private Loan carriedForwardFrom;
-
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<LoanPayment> payments = new ArrayList<>();
 
     @Column(name = "notes", columnDefinition = "TEXT")

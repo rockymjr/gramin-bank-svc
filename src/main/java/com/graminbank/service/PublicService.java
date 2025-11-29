@@ -25,21 +25,45 @@ public class PublicService {
     private final LoanRepository loanRepository;
 
     public SummaryResponse getSummary() {
-        // Active counts
+        // Get ALL deposits and loans
+        List<Deposit> allDeposits = depositRepository.findAll();
+        List<Loan> allLoans = loanRepository.findAll();
+
+        // Calculate total collected from deposits
+        BigDecimal totalDepositCollected = allDeposits.stream()
+                .map(Deposit::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Calculate total loan payments received (paid_amount from all loans)
+        BigDecimal totalLoanPaymentsReceived = allLoans.stream()
+                .map(Loan::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Calculate total returned to depositors (principal + interest for returned/settled deposits)
+        BigDecimal totalDepositReturned = allDeposits.stream()
+                .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
+                .map(d -> {
+                    BigDecimal principal = d.getAmount();
+                    BigDecimal interest = d.getInterestEarned() != null ? d.getInterestEarned() : BigDecimal.ZERO;
+                    return principal.add(interest);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Available Balance = (Total Deposits + Loan Payments Received) - Deposits Returned
+        BigDecimal availableBalance = totalDepositCollected
+                .add(totalLoanPaymentsReceived)
+                .subtract(totalDepositReturned);
+
+        // Active counts and amounts
         Long activeDepositsCount = depositRepository.countByStatus("ACTIVE");
         Long activeLoansCount = loanRepository.countByStatus("ACTIVE");
-
-        // Active amounts (currently outstanding)
         BigDecimal activeDeposits = depositRepository.getTotalDepositsByStatus("ACTIVE");
         BigDecimal activeLoans = loanRepository.getTotalLoansByStatus("ACTIVE");
-
-        BigDecimal availableBalance = activeDeposits.subtract(activeLoans);
-
 
         SummaryResponse response = new SummaryResponse();
         response.setTotalDeposits(activeDeposits);
         response.setTotalLoans(activeLoans);
-        response.setAvailableBalance(availableBalance);  // FIXED: actual balance
+        response.setAvailableBalance(availableBalance);  // FIXED CALCULATION
         response.setActiveDepositsCount(activeDepositsCount);
         response.setActiveLoansCount(activeLoansCount);
         response.setFinancialYear(String.valueOf(LocalDate.now().getYear()));
@@ -48,13 +72,11 @@ public class PublicService {
     }
 
     public Page<MaskedDepositResponse> getMaskedDeposits(Pageable pageable) {
-        // Changed to get all deposits, not just ACTIVE
         return depositRepository.findAll(pageable)
                 .map(this::convertToMaskedResponse);
     }
 
     public Page<MaskedLoanResponse> getMaskedLoans(Pageable pageable) {
-        // Changed to get all loans, not just ACTIVE
         return loanRepository.findAll(pageable)
                 .map(this::convertToMaskedResponse);
     }

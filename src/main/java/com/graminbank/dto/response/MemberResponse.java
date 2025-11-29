@@ -13,7 +13,6 @@ public class MemberResponse {
     private String phone;
     private Boolean isOperator;
     private String pin;
-    private String address;
     private LocalDate joiningDate;
     private Boolean isActive;
 }

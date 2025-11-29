@@ -1,5 +1,6 @@
 package com.graminbank.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class LoanPayment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "loan_id", nullable = false)
+    @JsonBackReference
     private Loan loan;
 
     @Column(name = "payment_amount", nullable = false, precision = 12, scale = 2)
