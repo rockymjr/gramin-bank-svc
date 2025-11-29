@@ -29,18 +29,25 @@ public class PublicService {
         List<Deposit> allDeposits = depositRepository.findAll();
         List<Loan> allLoans = loanRepository.findAll();
 
-        // Calculate total collected from deposits
+        // === CASH INFLOWS ===
+        // 1. Total collected from deposits (principal only)
         BigDecimal totalDepositCollected = allDeposits.stream()
                 .map(Deposit::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Calculate total loan payments received (paid_amount from all loans)
-        BigDecimal totalLoanPaymentsReceived = allLoans.stream()
+        // 2. Total loan repayments received (principal + interest payments)
+        BigDecimal totalLoanRepaymentsReceived = allLoans.stream()
                 .map(Loan::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Calculate total returned to depositors (principal + interest for returned/settled deposits)
-        BigDecimal totalDepositReturned = allDeposits.stream()
+        // === CASH OUTFLOWS ===
+        // 3. Total loans disbursed (money given as loans)
+        BigDecimal totalLoansDisbursed = allLoans.stream()
+                .map(Loan::getLoanAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 4. Total returned to depositors (principal + interest)
+        BigDecimal totalReturnedToDepositors = allDeposits.stream()
                 .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
                 .map(d -> {
                     BigDecimal principal = d.getAmount();
@@ -49,10 +56,29 @@ public class PublicService {
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Available Balance = (Total Deposits + Loan Payments Received) - Deposits Returned
+        // === AVAILABLE BALANCE CALCULATION ===
+        // Available Balance = Money In - Money Out
+        // = (Deposits Collected + Loan Repayments) - (Loans Disbursed + Deposits Returned)
         BigDecimal availableBalance = totalDepositCollected
-                .add(totalLoanPaymentsReceived)
-                .subtract(totalDepositReturned);
+                .add(totalLoanRepaymentsReceived)
+                .subtract(totalLoansDisbursed)
+                .subtract(totalReturnedToDepositors);
+
+        // === BANK PROFIT CALCULATION ===
+        // Total interest received from loans
+        BigDecimal totalLoanInterestReceived = allLoans.stream()
+                .filter(l -> "CLOSED".equals(l.getStatus()) || "SETTLED".equals(l.getStatus()))
+                .map(Loan::getInterestAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Total interest paid to depositors
+        BigDecimal totalDepositInterestPaid = allDeposits.stream()
+                .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
+                .map(d -> d.getInterestEarned() != null ? d.getInterestEarned() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Bank's profit = Interest received - Interest paid
+        BigDecimal bankProfit = totalLoanInterestReceived.subtract(totalDepositInterestPaid);
 
         // Active counts and amounts
         Long activeDepositsCount = depositRepository.countByStatus("ACTIVE");
@@ -63,7 +89,8 @@ public class PublicService {
         SummaryResponse response = new SummaryResponse();
         response.setTotalDeposits(activeDeposits);
         response.setTotalLoans(activeLoans);
-        response.setAvailableBalance(availableBalance);  // FIXED CALCULATION
+        response.setAvailableBalance(availableBalance);
+        response.setBankProfit(bankProfit);
         response.setActiveDepositsCount(activeDepositsCount);
         response.setActiveLoansCount(activeLoansCount);
         response.setFinancialYear(String.valueOf(LocalDate.now().getYear()));

@@ -10,6 +10,7 @@ public class SummaryResponse {
     private BigDecimal totalDeposits;
     private BigDecimal totalLoans;
     private BigDecimal availableBalance;
+    private BigDecimal bankProfit;
     private Long activeDepositsCount;
     private Long activeLoansCount;
     private String financialYear;
