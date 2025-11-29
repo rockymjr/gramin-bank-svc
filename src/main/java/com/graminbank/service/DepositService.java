@@ -45,7 +45,8 @@ public class DepositService {
         deposit.setMember(member);
         deposit.setAmount(request.getAmount());
         deposit.setDepositDate(request.getDepositDate());
-        deposit.setInterestRate(new BigDecimal("2.5"));
+        deposit.setInterestRate(request.getInterestRate());
+        deposit.setNotes(request.getNotes());
         deposit.setFinancialYear(InterestCalculator.getFinancialYearFromDate(request.getDepositDate()));
         deposit.setStatus("ACTIVE");
 

@@ -21,4 +21,9 @@ public class DepositResponse {
     // For active deposits - current interest till today
     private BigDecimal currentInterest;
     private BigDecimal currentTotal;
+
+    private BigDecimal interestRate;
+    private Integer durationDays;
+    private Integer durationMonths;
+    private String notes;
 }

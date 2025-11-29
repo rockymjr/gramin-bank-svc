@@ -28,4 +28,9 @@ public class LoanResponse {
     private BigDecimal currentInterest;
     private BigDecimal currentTotal;
     private BigDecimal currentRemaining;
+
+    private BigDecimal interestRate;
+    private Integer durationDays;
+    private Integer durationMonths;
+    private String notes;
 }

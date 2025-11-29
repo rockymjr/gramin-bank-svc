@@ -28,4 +28,7 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
 
     @Query("SELECT COUNT(d) FROM Deposit d WHERE d.status = :status")
     Long countByStatus(@Param("status") String status);
+
+    List<Deposit> findByMemberIdOrderByDepositDateDesc(UUID memberId);
+    Page<Deposit> findByStatusOrderByDepositDateDesc(String status, Pageable pageable);
 }

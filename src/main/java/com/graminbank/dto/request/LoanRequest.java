@@ -19,4 +19,10 @@ public class LoanRequest {
 
     @NotNull(message = "Loan date is required")
     private LocalDate loanDate;
+
+    @DecimalMin(value = "0.1", message = "Interest rate must be at least 0.1%")
+    @DecimalMax(value = "100", message = "Interest rate cannot exceed 100%")
+    private BigDecimal interestRate = new BigDecimal("5.0");
+
+    private String notes;
 }

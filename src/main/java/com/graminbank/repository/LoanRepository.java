@@ -28,4 +28,7 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
 
     @Query("SELECT COUNT(l) FROM Loan l WHERE l.status = :status")
     Long countByStatus(@Param("status") String status);
+
+    List<Loan> findByMemberIdOrderByLoanDateDesc(UUID memberId);
+    Page<Loan> findByStatusOrderByLoanDateDesc(String status, Pageable pageable);
 }

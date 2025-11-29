@@ -1,7 +1,9 @@
 package com.graminbank.service;
 
+import com.graminbank.dto.request.ChangePinRequest;
 import com.graminbank.dto.request.MemberRequest;
 import com.graminbank.dto.response.MemberResponse;
+import com.graminbank.exception.BusinessException;
 import com.graminbank.exception.ResourceNotFoundException;
 import com.graminbank.model.Member;
 import com.graminbank.repository.MemberRepository;
@@ -31,7 +33,6 @@ public class MemberService {
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
         member.setPin(request.getPin());  // NEW
-        member.setAddress(request.getAddress());
         member.setJoiningDate(LocalDate.now());
         member.setIsActive(true);
 
@@ -68,7 +69,6 @@ public class MemberService {
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
         member.setPin(request.getPin());  // NEW
-        member.setAddress(request.getAddress());
         Member updatedMember = memberRepository.save(member);
         return convertToResponse(updatedMember);
     }
@@ -87,9 +87,21 @@ public class MemberService {
         response.setFirstName(member.getFirstName());
         response.setLastName(member.getLastName());
         response.setPhone(member.getPhone());
-        response.setAddress(member.getAddress());
         response.setJoiningDate(member.getJoiningDate());
         response.setIsActive(member.getIsActive());
         return response;
+    }
+
+    @Transactional
+    public void changePin(UUID memberId, ChangePinRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+
+        if (!request.getOldPin().equals(member.getPin())) {
+            throw new BusinessException("Old PIN is incorrect");
+        }
+
+        member.setPin(request.getNewPin());
+        memberRepository.save(member);
     }
 }

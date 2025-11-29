@@ -70,6 +70,9 @@ public class Loan {
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanPayment> payments = new ArrayList<>();
 
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

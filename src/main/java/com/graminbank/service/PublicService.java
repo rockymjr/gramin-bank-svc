@@ -25,24 +25,6 @@ public class PublicService {
     private final LoanRepository loanRepository;
 
     public SummaryResponse getSummary() {
-        // Get ALL deposits (not just active)
-        List<Deposit> allDeposits = depositRepository.findAll();
-        List<Loan> allLoans = loanRepository.findAll();
-
-        // Calculate total collected (all deposits ever made)
-        BigDecimal totalCollected = allDeposits.stream()
-                .map(Deposit::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Calculate total returned (deposits that have been returned with interest)
-        BigDecimal totalReturned = allDeposits.stream()
-                .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
-                .map(d -> d.getAmount().add(d.getInterestEarned() != null ? d.getInterestEarned() : BigDecimal.ZERO))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Calculate actual balance: collected - returned
-        BigDecimal actualBalance = totalCollected.subtract(totalReturned);
-
         // Active counts
         Long activeDepositsCount = depositRepository.countByStatus("ACTIVE");
         Long activeLoansCount = loanRepository.countByStatus("ACTIVE");
@@ -51,10 +33,13 @@ public class PublicService {
         BigDecimal activeDeposits = depositRepository.getTotalDepositsByStatus("ACTIVE");
         BigDecimal activeLoans = loanRepository.getTotalLoansByStatus("ACTIVE");
 
+        BigDecimal availableBalance = activeDeposits.subtract(activeLoans);
+
+
         SummaryResponse response = new SummaryResponse();
         response.setTotalDeposits(activeDeposits);
         response.setTotalLoans(activeLoans);
-        response.setAvailableBalance(actualBalance);  // FIXED: actual balance
+        response.setAvailableBalance(availableBalance);  // FIXED: actual balance
         response.setActiveDepositsCount(activeDepositsCount);
         response.setActiveLoansCount(activeLoansCount);
         response.setFinancialYear(String.valueOf(LocalDate.now().getYear()));

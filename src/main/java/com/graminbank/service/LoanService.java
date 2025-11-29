@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -292,8 +293,14 @@ public class LoanService {
 
     private LoanResponse convertToResponseWithCurrentInterest(Loan loan) {
         LoanResponse response = convertToResponse(loan);
+        response.setInterestRate(loan.getInterestRate());
+        response.setNotes(loan.getNotes());
 
         if ("ACTIVE".equals(loan.getStatus())) {
+            LocalDate endDate = loan.getReturnDate() != null ? loan.getReturnDate() : LocalDate.now();
+            long days = ChronoUnit.DAYS.between(loan.getLoanDate(), endDate);
+            response.setDurationDays((int) days);
+            response.setDurationMonths((int) Math.ceil(days / 30.0));
             BigDecimal currentInterest = InterestCalculator.calculateLoanInterest(
                     loan.getLoanAmount(),
                     loan.getLoanDate(),

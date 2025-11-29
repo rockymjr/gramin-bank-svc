@@ -58,6 +58,9 @@ public class Deposit {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

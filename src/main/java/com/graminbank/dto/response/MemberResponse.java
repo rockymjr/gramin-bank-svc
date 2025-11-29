@@ -11,7 +11,8 @@ public class MemberResponse {
     private String firstName;
     private String lastName;
     private String phone;
-    private String pin;  // NEW - shown only to admin
+    private Boolean isOperator;
+    private String pin;
     private String address;
     private LocalDate joiningDate;
     private Boolean isActive;

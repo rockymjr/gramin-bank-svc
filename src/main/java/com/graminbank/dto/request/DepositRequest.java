@@ -19,4 +19,10 @@ public class DepositRequest {
 
     @NotNull(message = "Deposit date is required")
     private LocalDate depositDate;
+
+    @DecimalMin(value = "0.1", message = "Interest rate must be at least 0.1%")
+    @DecimalMax(value = "100", message = "Interest rate cannot exceed 100%")
+    private BigDecimal interestRate = new BigDecimal("2.5");
+
+    private String notes;
 }

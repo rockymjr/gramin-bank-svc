@@ -11,6 +11,7 @@ import com.graminbank.repository.DepositRepository;
 import com.graminbank.repository.FinancialYearRepository;
 import com.graminbank.repository.LoanRepository;
 import com.graminbank.repository.MemberRepository;
+import com.graminbank.util.InterestCalculator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -61,20 +62,51 @@ public class ReportService {
 
     public YearlySettlementResponse getYearlySettlement(String year) {
         if (year == null) {
-            year = String.valueOf(LocalDate.now().getYear());
+            year = InterestCalculator.getCurrentFinancialYear();
         }
 
-        FinancialYear fy = financialYearRepository.findByYear(year)
-                .orElseThrow(() -> new ResourceNotFoundException("Financial year not found"));
+        // Try to find existing financial year data
+        FinancialYear fy = financialYearRepository.findByYear(year).orElse(null);
 
         YearlySettlementResponse response = new YearlySettlementResponse();
-        response.setYear(fy.getYear());
-        response.setTotalDeposits(fy.getTotalDeposits());
-        response.setTotalLoans(fy.getTotalLoans());
-        response.setTotalDepositInterest(fy.getTotalInterestEarned());
-        response.setTotalLoanInterest(fy.getTotalInterestPaid());
-        response.setNetProfit(fy.getNetBalance());
-        response.setSettlementDate(fy.getSettlementDate());
+        response.setYear(year);
+
+        if (fy != null) {
+            // Use existing financial year data
+            response.setTotalDeposits(fy.getTotalDeposits());
+            response.setTotalLoans(fy.getTotalLoans());
+            response.setTotalDepositInterest(fy.getTotalInterestEarned());
+            response.setTotalLoanInterest(fy.getTotalInterestPaid());
+            response.setNetProfit(fy.getNetBalance());
+            response.setSettlementDate(fy.getSettlementDate());
+        } else {
+            // Calculate from current data for the year
+            List<Deposit> deposits = depositRepository.findByStatusAndFinancialYear("SETTLED", year);
+            List<Loan> loans = loanRepository.findByStatusAndFinancialYear("SETTLED", year);
+
+            BigDecimal totalDeposits = deposits.stream()
+                    .map(Deposit::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalLoans = loans.stream()
+                    .map(Loan::getLoanAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalDepositInterest = deposits.stream()
+                    .map(Deposit::getInterestEarned)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalLoanInterest = loans.stream()
+                    .map(Loan::getInterestAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            response.setTotalDeposits(totalDeposits);
+            response.setTotalLoans(totalLoans);
+            response.setTotalDepositInterest(totalDepositInterest);
+            response.setTotalLoanInterest(totalLoanInterest);
+            response.setNetProfit(totalLoanInterest.subtract(totalDepositInterest));
+            response.setSettlementDate(null);
+        }
 
         return response;
     }

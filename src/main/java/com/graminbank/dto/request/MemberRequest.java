@@ -21,7 +21,7 @@ public class MemberRequest {
     @Pattern(regexp = "^[0-9]{4}$", message = "PIN must be 4 digits")
     private String pin;
 
-    private String address;
+    private Boolean isOperator = false;
 
     public interface ValidationGroups {
         interface PhoneValidation {}

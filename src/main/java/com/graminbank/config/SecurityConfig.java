@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/member/auth/**").permitAll()  // NEW
                         .requestMatchers("/api/member/**").authenticated()    // NEW
                         .requestMatchers("/api/admin/**").authenticated()
+                        .requestMatchers("/api/operator/auth/**").permitAll()
+                        .requestMatchers("/api/operator/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

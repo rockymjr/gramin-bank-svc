@@ -1,6 +1,5 @@
 package com.graminbank.model;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,11 +32,11 @@ public class Member {
     @Column(name = "phone", length = 15)
     private String phone;
 
-    @Column(name = "pin", length = 4)  // NEW FIELD
+    @Column(name = "pin", length = 4)
     private String pin;
 
-    @Column(name = "address", columnDefinition = "TEXT")
-    private String address;
+    @Column(name = "is_operator")
+    private Boolean isOperator = false;
 
     @Column(name = "joining_date", nullable = false)
     private LocalDate joiningDate;

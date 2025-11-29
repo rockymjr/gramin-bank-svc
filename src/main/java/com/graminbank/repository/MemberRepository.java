@@ -25,5 +25,7 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
     boolean existsByPhone(String phone);
 
-    Optional<Member> findByPhoneAndIsActiveTrue(String phone);  // NEW METHOD
+    Optional<Member> findByPhoneAndIsActiveTrue(String phone);
+
+    List<Member> findByIsOperatorTrueAndIsActiveTrue();
 }
