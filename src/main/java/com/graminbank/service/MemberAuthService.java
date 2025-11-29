@@ -53,7 +53,7 @@ public class MemberAuthService {
         response.setMemberName(member.getFirstName() + " " + member.getLastName());
         response.setPhone(member.getPhone());
         response.setExpiresIn(86400L);
-
+        response.setIsOperator(member.getIsOperator());
         return response;
     }
 

@@ -286,6 +286,9 @@ public class LoanService {
         response.setPaidAmount(loan.getPaidAmount());
         response.setDiscountAmount(loan.getDiscountAmount());
         response.setRemainingAmount(loan.getRemainingAmount());
+        InterestCalculator.DurationResult duration = InterestCalculator.calculateDuration(loan.getLoanDate(), loan.getReturnDate() != null ? loan.getReturnDate() : LocalDate.now());
+        response.setDurationDays(duration.days);
+        response.setDurationMonths(duration.months);
         return response;
     }
 
@@ -295,10 +298,6 @@ public class LoanService {
         response.setNotes(loan.getNotes());
 
         if ("ACTIVE".equals(loan.getStatus())) {
-            LocalDate endDate = loan.getReturnDate() != null ? loan.getReturnDate() : LocalDate.now();
-            long days = ChronoUnit.DAYS.between(loan.getLoanDate(), endDate);
-            response.setDurationDays((int) days);
-            response.setDurationMonths((int) Math.ceil(days / 30.0));
             BigDecimal currentInterest = InterestCalculator.calculateLoanInterest(
                     loan.getLoanAmount(),
                     loan.getLoanDate(),

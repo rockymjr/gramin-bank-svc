@@ -68,7 +68,8 @@ public class MemberService {
         member.setFirstName(request.getFirstName());
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
-        member.setPin(request.getPin());  // NEW
+        member.setPin(request.getPin());
+        member.setIsOperator(request.getIsOperator());
         Member updatedMember = memberRepository.save(member);
         return convertToResponse(updatedMember);
     }
@@ -89,6 +90,8 @@ public class MemberService {
         response.setPhone(member.getPhone());
         response.setJoiningDate(member.getJoiningDate());
         response.setIsActive(member.getIsActive());
+        response.setIsOperator(member.getIsOperator());
+        response.setPin(member.getPin());
         return response;
     }
 

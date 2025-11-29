@@ -11,4 +11,5 @@ public class MemberAuthResponse {
     private String memberName;
     private String phone;
     private Long expiresIn;
+    private Boolean isOperator;
 }

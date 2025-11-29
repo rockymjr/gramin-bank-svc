@@ -152,6 +152,9 @@ public class DepositService {
         response.setTotalAmount(deposit.getTotalAmount());
         response.setReturnDate(deposit.getReturnDate());
         response.setInterestRate(deposit.getInterestRate());
+        InterestCalculator.DurationResult duration = InterestCalculator.calculateDuration(deposit.getDepositDate(), deposit.getReturnDate() != null ? deposit.getReturnDate() : LocalDate.now());
+        response.setDurationDays(duration.days);
+        response.setDurationMonths(duration.months);
         return response;
     }
 
