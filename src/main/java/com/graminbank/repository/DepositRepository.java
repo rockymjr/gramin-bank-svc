@@ -19,9 +19,9 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
 
     List<Deposit> findByMemberId(UUID memberId);
 
-    Page<Deposit> findByStatus(String status, Pageable pageable);
+    Page<Deposit> findByStatusOrderByDepositDateDesc(String status, Pageable pageable);
 
-    List<Deposit> findByStatus(String status);
+    Page<Deposit> findAllByOrderByDepositDateDesc(Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(d.amount), 0) FROM Deposit d WHERE d.status = :status")
     BigDecimal getTotalDepositsByStatus(@Param("status") String status);
@@ -30,5 +30,4 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
     Long countByStatus(@Param("status") String status);
 
     List<Deposit> findByMemberIdOrderByDepositDateDesc(UUID memberId);
-    Page<Deposit> findByStatusOrderByDepositDateDesc(String status, Pageable pageable);
 }

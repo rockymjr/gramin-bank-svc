@@ -86,7 +86,8 @@ public class DepositService {
     }
 
     public Page<DepositResponse> getDepositsByStatus(String status, Pageable pageable) {
-        return depositRepository.findByStatus(status, pageable)
+        return   ( "ALL".equals(status) ? depositRepository.findAllByOrderByDepositDateDesc(pageable)
+                : depositRepository.findByStatusOrderByDepositDateDesc(status, pageable))
                 .map(this::convertToResponseWithCurrentInterest);
     }
 

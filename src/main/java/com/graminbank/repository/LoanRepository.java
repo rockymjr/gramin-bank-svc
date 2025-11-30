@@ -1,5 +1,6 @@
 package com.graminbank.repository;
 
+import com.graminbank.model.Deposit;
 import com.graminbank.model.Loan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,8 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
     Page<Loan> findByStatus(String status, Pageable pageable);
 
     List<Loan> findByStatus(String status);
+
+    Page<Loan> findAllByOrderByLoanDateDesc(Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(l.loanAmount), 0) FROM Loan l WHERE l.status = :status")
     BigDecimal getTotalLoansByStatus(@Param("status") String status);

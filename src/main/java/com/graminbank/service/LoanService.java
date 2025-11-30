@@ -212,7 +212,8 @@ public class LoanService {
     }
 
     public Page<LoanResponse> getLoansByStatus(String status, Pageable pageable) {
-        return loanRepository.findByStatus(status, pageable)
+        return ("ALL".equals(status) ? loanRepository.findAllByOrderByLoanDateDesc(pageable)
+                : loanRepository.findByStatusOrderByLoanDateDesc(status, pageable))
                 .map(this::convertToResponseWithCurrentInterest);
     }
 

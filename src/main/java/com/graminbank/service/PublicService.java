@@ -35,49 +35,53 @@ public class PublicService {
                 .map(Deposit::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 2. Total loan repayments received (principal + interest payments)
+        // 2. Total loan repayments received (includes principal + interest from borrowers)
         BigDecimal totalLoanRepaymentsReceived = allLoans.stream()
                 .map(Loan::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // === CASH OUTFLOWS ===
-        // 3. Total loans disbursed (money given as loans)
+        // 3. Total loans disbursed (money given out as loans)
         BigDecimal totalLoansDisbursed = allLoans.stream()
                 .map(Loan::getLoanAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 4. Total returned to depositors (principal + interest)
-        BigDecimal totalReturnedToDepositors = allDeposits.stream()
+        // 4a. Total deposit principal returned to depositors
+        BigDecimal totalLoanRepaid = allLoans.stream()
+                .filter(d -> "CLOSED".equals(d.getStatus()))
+                .map(Loan::getTotalRepayment)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 4a. Total deposit principal returned to depositors
+        BigDecimal totalDepositPrincipalReturned = allDeposits.stream()
                 .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
-                .map(d -> {
-                    BigDecimal principal = d.getAmount();
-                    BigDecimal interest = d.getInterestEarned() != null ? d.getInterestEarned() : BigDecimal.ZERO;
-                    return principal.add(interest);
-                })
+                .map(Deposit::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // === AVAILABLE BALANCE CALCULATION ===
-        // Available Balance = Money In - Money Out
-        // = (Deposits Collected + Loan Repayments) - (Loans Disbursed + Deposits Returned)
-        BigDecimal availableBalance = totalDepositCollected
-                .add(totalLoanRepaymentsReceived)
-                .subtract(totalLoansDisbursed)
-                .subtract(totalReturnedToDepositors);
-
-        // === BANK PROFIT CALCULATION ===
-        // Total interest received from loans
-        BigDecimal totalLoanInterestReceived = allLoans.stream()
-                .filter(l -> "CLOSED".equals(l.getStatus()) || "SETTLED".equals(l.getStatus()))
-                .map(Loan::getInterestAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Total interest paid to depositors
+        // 4b. Total deposit interest paid to depositors
         BigDecimal totalDepositInterestPaid = allDeposits.stream()
                 .filter(d -> "RETURNED".equals(d.getStatus()) || "SETTLED".equals(d.getStatus()))
                 .map(d -> d.getInterestEarned() != null ? d.getInterestEarned() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Bank's profit = Interest received - Interest paid
+        // === AVAILABLE BALANCE CALCULATION ===
+        // Money In: Deposits collected + Loan repayments
+        // Money Out: Loans disbursed + Deposit principal returned + Deposit interest paid
+        BigDecimal availableBalance = totalDepositCollected
+                .add(totalLoanRepaymentsReceived)
+                .add(totalLoanRepaid)
+                .subtract(totalLoansDisbursed)
+                .subtract(totalDepositPrincipalReturned)
+                .subtract(totalDepositInterestPaid);
+
+        // === BANK PROFIT CALCULATION ===
+        // Total interest received from loans (5% per month)
+        BigDecimal totalLoanInterestReceived = allLoans.stream()
+                .filter(l -> "CLOSED".equals(l.getStatus()) || "SETTLED".equals(l.getStatus()))
+                .map(Loan::getInterestAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Bank's profit = (5% loan interest received) - (2.5% deposit interest paid)
         BigDecimal bankProfit = totalLoanInterestReceived.subtract(totalDepositInterestPaid);
 
         // Active counts and amounts
