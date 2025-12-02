@@ -10,6 +10,7 @@ import com.graminbank.model.Member;
 import com.graminbank.repository.DepositRepository;
 import com.graminbank.repository.MemberRepository;
 import com.graminbank.util.InterestCalculator;
+import com.graminbank.util.DepositMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -51,7 +52,7 @@ public class DepositService {
         deposit.setStatus("ACTIVE");
 
         Deposit savedDeposit = depositRepository.save(deposit);
-        return convertToResponse(savedDeposit);
+        return DepositMapper.convertToResponse(savedDeposit);
     }
 
     @Transactional
@@ -82,19 +83,19 @@ public class DepositService {
         }
 
         Deposit updatedDeposit = depositRepository.save(deposit);
-        return convertToResponse(updatedDeposit);
+        return DepositMapper.convertToResponse(updatedDeposit);
     }
 
     public Page<DepositResponse> getDepositsByStatus(String status, Pageable pageable) {
         return   ( "ALL".equals(status) ? depositRepository.findAllByOrderByDepositDateDesc(pageable)
                 : depositRepository.findByStatusOrderByDepositDateDesc(status, pageable))
-                .map(this::convertToResponseWithCurrentInterest);
+                .map(DepositMapper::convertToResponseWithCurrentInterest);
     }
 
     public DepositResponse getDepositById(UUID depositId) {
         Deposit deposit = depositRepository.findById(depositId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deposit not found"));
-        return convertToResponseWithCurrentInterest(deposit);
+        return DepositMapper.convertToResponseWithCurrentInterest(deposit);
     }
 
     public List<Deposit> getDepositsByMember(UUID memberId) {
@@ -122,7 +123,7 @@ public class DepositService {
         deposit.setReturnDate(returnDate);
 
         Deposit returned = depositRepository.save(deposit);
-        return convertToResponse(returned);
+        return DepositMapper.convertToResponse(returned);
     }
 
     @Transactional
@@ -141,37 +142,4 @@ public class DepositService {
         depositRepository.save(deposit);
     }
 
-    private DepositResponse convertToResponse(Deposit deposit) {
-        DepositResponse response = new DepositResponse();
-        response.setId(deposit.getId());
-        response.setMemberId(deposit.getMember().getId());
-        response.setMemberName(deposit.getMember().getFirstName() + " " + deposit.getMember().getLastName());
-        response.setAmount(deposit.getAmount());
-        response.setDepositDate(deposit.getDepositDate());
-        response.setStatus(deposit.getStatus());
-        response.setInterestEarned(deposit.getInterestEarned());
-        response.setTotalAmount(deposit.getTotalAmount());
-        response.setReturnDate(deposit.getReturnDate());
-        response.setInterestRate(deposit.getInterestRate());
-        InterestCalculator.DurationResult duration = InterestCalculator.calculateDuration(deposit.getDepositDate(), deposit.getReturnDate() != null ? deposit.getReturnDate() : LocalDate.now());
-        response.setDurationDays(duration.days);
-        response.setDurationMonths(duration.months);
-        return response;
-    }
-
-    private DepositResponse convertToResponseWithCurrentInterest(Deposit deposit) {
-        DepositResponse response = convertToResponse(deposit);
-
-        if ("ACTIVE".equals(deposit.getStatus())) {
-            BigDecimal currentInterest = InterestCalculator.calculateDepositInterest(
-                    deposit.getAmount(),
-                    deposit.getDepositDate(),
-                    LocalDate.now()
-            );
-            response.setCurrentInterest(currentInterest);
-            response.setCurrentTotal(deposit.getAmount().add(currentInterest));
-        }
-
-        return response;
-    }
 }

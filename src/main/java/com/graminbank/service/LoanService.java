@@ -1,20 +1,22 @@
 package com.graminbank.service;
 
+import com.graminbank.dto.request.LoanClosureRequest;
+import com.graminbank.dto.request.LoanPaymentRequest;
 import com.graminbank.dto.request.LoanRequest;
 import com.graminbank.dto.request.LoanUpdateRequest;
-import com.graminbank.dto.request.LoanPaymentRequest;
-import com.graminbank.dto.request.LoanClosureRequest;
-import com.graminbank.dto.response.LoanResponse;
 import com.graminbank.dto.response.LoanPaymentResponse;
+import com.graminbank.dto.response.LoanResponse;
 import com.graminbank.exception.BusinessException;
 import com.graminbank.exception.ResourceNotFoundException;
 import com.graminbank.model.Loan;
 import com.graminbank.model.LoanPayment;
 import com.graminbank.model.Member;
-import com.graminbank.repository.LoanRepository;
 import com.graminbank.repository.LoanPaymentRepository;
+import com.graminbank.repository.LoanRepository;
 import com.graminbank.repository.MemberRepository;
+import com.graminbank.util.BankConstants;
 import com.graminbank.util.InterestCalculator;
+import com.graminbank.util.LoanMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,10 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.graminbank.util.BankConstants.LOAN_NOT_FOUND;
+import static com.graminbank.util.LoanMapper.convertToResponse;
 
 @Slf4j
 @Service
@@ -55,7 +59,7 @@ public class LoanService {
         loan.setLoanDate(request.getLoanDate());
         loan.setInterestRate(new BigDecimal("5.0"));
         loan.setFinancialYear(InterestCalculator.getFinancialYearFromDate(request.getLoanDate()));
-        loan.setStatus("ACTIVE");
+        loan.setStatus(BankConstants.ACTIVE);
         loan.setRemainingAmount(request.getLoanAmount());
 
         Loan savedLoan = loanRepository.save(loan);
@@ -67,9 +71,9 @@ public class LoanService {
         log.info("Updating loan: {}", loanId);
 
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(LOAN_NOT_FOUND));
 
-        if (!"ACTIVE".equals(loan.getStatus())) {
+        if (!BankConstants.ACTIVE.equals(loan.getStatus())) {
             throw new BusinessException("Can only edit active loans");
         }
 
@@ -99,9 +103,9 @@ public class LoanService {
         log.info("Adding payment to loan: {}", loanId);
 
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(LOAN_NOT_FOUND));
 
-        if (!"ACTIVE".equals(loan.getStatus())) {
+        if (!BankConstants.ACTIVE.equals(loan.getStatus())) {
             throw new BusinessException("Can only add payments to active loans");
         }
 
@@ -154,23 +158,23 @@ public class LoanService {
 
         loanRepository.save(loan);
 
-        return convertPaymentToResponse(payment, loan);
+        return LoanMapper.convertPaymentToResponse(payment, loan);
     }
 
     public List<LoanPaymentResponse> getPaymentHistory(UUID loanId) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(LOAN_NOT_FOUND));
 
         List<LoanPayment> payments = loanPaymentRepository.findByLoanIdOrderByPaymentDateDesc(loanId);
         return payments.stream()
-                .map(payment -> convertPaymentToResponse(payment, loan))
+                .map(payment -> LoanMapper.convertPaymentToResponse(payment, loan))
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public LoanResponse closeLoan(UUID loanId, LoanClosureRequest request) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(LOAN_NOT_FOUND));
 
         if (!"ACTIVE".equals(loan.getStatus())) {
             throw new BusinessException("Loan is already closed or settled");
@@ -208,40 +212,21 @@ public class LoanService {
         loan.setRemainingAmount(BigDecimal.ZERO);
 
         Loan closedLoan = loanRepository.save(loan);
-        return convertToResponse(closedLoan);
+        return LoanMapper.convertToResponse(closedLoan);
     }
 
     public Page<LoanResponse> getLoansByStatus(String status, Pageable pageable) {
         return ("ALL".equals(status) ? loanRepository.findAllByOrderByLoanDateDesc(pageable)
                 : loanRepository.findByStatusOrderByLoanDateDesc(status, pageable))
-                .map(this::convertToResponseWithCurrentInterest);
+                .map(LoanMapper::convertToResponseWithCurrentInterest);
     }
 
     public LoanResponse getLoanById(UUID loanId) {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
-        return convertToResponseWithCurrentInterest(loan);
+        return LoanMapper.convertToResponseWithCurrentInterest(loan);
     }
 
-    public List<Loan> getLoansByMember(UUID memberId) {
-        return loanRepository.findByMemberId(memberId);
-    }
-
-    @Transactional
-    public void settleLoan(Loan loan, LocalDate settlementDate) {
-        BigDecimal interest = InterestCalculator.calculateLoanInterest(
-                loan.getLoanAmount(),
-                loan.getLoanDate(),
-                settlementDate
-        );
-
-        loan.setInterestAmount(interest);
-        loan.setTotalRepayment(loan.getLoanAmount().add(interest));
-        loan.setStatus("SETTLED");
-        loan.setReturnDate(settlementDate);
-
-        loanRepository.save(loan);
-    }
 
     @Transactional
     public Loan carryForwardLoan(Loan oldLoan, String newFinancialYear, LocalDate carryForwardDate) {
@@ -273,58 +258,5 @@ public class LoanService {
         return loanRepository.save(newLoan);
     }
 
-    private LoanResponse convertToResponse(Loan loan) {
-        LoanResponse response = new LoanResponse();
-        response.setId(loan.getId());
-        response.setMemberId(loan.getMember().getId());
-        response.setMemberName(loan.getMember().getFirstName() + " " + loan.getMember().getLastName());
-        response.setLoanAmount(loan.getLoanAmount());
-        response.setLoanDate(loan.getLoanDate());
-        response.setStatus(loan.getStatus());
-        response.setReturnDate(loan.getReturnDate());
-        response.setInterestAmount(loan.getInterestAmount());
-        response.setTotalRepayment(loan.getTotalRepayment());
-        response.setPaidAmount(loan.getPaidAmount());
-        response.setDiscountAmount(loan.getDiscountAmount());
-        response.setRemainingAmount(loan.getRemainingAmount());
-        InterestCalculator.DurationResult duration = InterestCalculator.calculateDuration(loan.getLoanDate(), loan.getReturnDate() != null ? loan.getReturnDate() : LocalDate.now());
-        response.setDurationDays(duration.days);
-        response.setDurationMonths(duration.months);
-        return response;
-    }
 
-    private LoanResponse convertToResponseWithCurrentInterest(Loan loan) {
-        LoanResponse response = convertToResponse(loan);
-        response.setInterestRate(loan.getInterestRate());
-        response.setNotes(loan.getNotes());
-
-        if ("ACTIVE".equals(loan.getStatus())) {
-            BigDecimal currentInterest = InterestCalculator.calculateLoanInterest(
-                    loan.getLoanAmount(),
-                    loan.getLoanDate(),
-                    LocalDate.now()
-            );
-            response.setCurrentInterest(currentInterest);
-
-            BigDecimal currentTotal = loan.getLoanAmount().add(currentInterest);
-            response.setCurrentTotal(currentTotal);
-
-            BigDecimal totalPaidWithDiscount = loan.getPaidAmount().add(loan.getDiscountAmount());
-            response.setCurrentRemaining(currentTotal.subtract(totalPaidWithDiscount));
-        }
-
-        return response;
-    }
-
-    private LoanPaymentResponse convertPaymentToResponse(LoanPayment payment, Loan loan) {
-        LoanPaymentResponse response = new LoanPaymentResponse();
-        response.setId(payment.getId());
-        response.setLoanId(loan.getId());
-        response.setPaymentAmount(payment.getPaymentAmount());
-        response.setPaymentDate(payment.getPaymentDate());
-        response.setDiscountApplied(payment.getDiscountApplied());
-        response.setNotes(payment.getNotes());
-        response.setCreatedAt(payment.getCreatedAt());
-        return response;
-    }
 }

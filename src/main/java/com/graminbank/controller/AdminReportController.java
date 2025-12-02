@@ -24,7 +24,7 @@ public class AdminReportController {
     public ResponseEntity<MemberStatementResponse> getMemberStatement(
             @PathVariable UUID memberId,
             @RequestParam(required = false) String year) {
-        MemberStatementResponse response = reportService.getMemberStatement(memberId, year);
+        MemberStatementResponse response = reportService.getMemberStatement(memberId);
         return ResponseEntity.ok(response);
     }
 

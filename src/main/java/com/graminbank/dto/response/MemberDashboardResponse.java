@@ -22,8 +22,8 @@ public class MemberDashboardResponse {
     private BigDecimal currentLoanInterest;
 
     // Lists
-    private List<DepositSummary> deposits;
-    private List<LoanSummary> loans;
+    private List<DepositResponse> deposits;
+    private List<LoanResponse> loans;
 
     @Data
     public static class DepositSummary {

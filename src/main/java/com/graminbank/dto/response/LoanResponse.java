@@ -15,9 +15,9 @@ public class LoanResponse {
     private LocalDate loanDate;
     private String status;
     private LocalDate returnDate;
-    private BigDecimal interestAmount;
-    private BigDecimal totalRepayment;
-    private Boolean carriedForward;
+    private BigDecimal interestAmount; //Total Interest
+    private BigDecimal totalRepayment; // Total Paid
+    private Boolean carriedForward; // Remove this
 
     // Payment tracking
     private BigDecimal paidAmount;
