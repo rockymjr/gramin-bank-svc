@@ -36,11 +36,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/admin/auth/**").permitAll()
-                        .requestMatchers("/api/member/auth/**").permitAll()  // NEW
-                        .requestMatchers("/api/member/**").authenticated()    // NEW
+                        .requestMatchers("/api/member/auth/**").permitAll()
+                        .requestMatchers("/api/member/**").authenticated()
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers("/api/operator/auth/**").permitAll()
                         .requestMatchers("/api/operator/**").authenticated()
+                        // Allow actuator health and info without authentication
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
