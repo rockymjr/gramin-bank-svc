@@ -57,12 +57,14 @@ public class ReportService {
         response.setTotalLoans(totalLoans);
         response.setActiveDepositsWithInterest(
                 deposits.stream()
-                        .map(DepositResponse::getCurrentTotal)
+                        .filter(d -> d.getStatus().equals("ACTIVE"))
+                        .map(DepositResponse::getTotalAmount)
                         .filter(Objects::nonNull)
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
         );
         response.setActiveLoansWithInterest(
                 loans.stream()
+                        .filter(l -> l.getStatus().equals("ACTIVE"))
                         .map(LoanResponse::getCurrentTotal)
                         .filter(Objects::nonNull)
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
