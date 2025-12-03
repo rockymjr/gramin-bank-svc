@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -54,8 +55,18 @@ public class ReportService {
         response.setLoans(loans);
         response.setTotalDeposits(totalDeposits);
         response.setTotalLoans(totalLoans);
-        response.setNetPosition(totalDeposits.subtract(totalLoans));
-
+        response.setActiveDepositsWithInterest(
+                deposits.stream()
+                        .map(DepositResponse::getCurrentTotal)
+                        .filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+        );
+        response.setActiveLoansWithInterest(
+                loans.stream()
+                        .map(LoanResponse::getCurrentTotal)
+                        .filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+        );
         return response;
     }
 

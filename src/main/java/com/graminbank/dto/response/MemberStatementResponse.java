@@ -13,5 +13,6 @@ public class MemberStatementResponse {
     private List<LoanResponse> loans;
     private BigDecimal totalDeposits;
     private BigDecimal totalLoans;
-    private BigDecimal netPosition;
+    private BigDecimal activeDepositsWithInterest;
+    private BigDecimal activeLoansWithInterest;
 }

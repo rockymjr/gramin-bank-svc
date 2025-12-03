@@ -1,0 +1,45 @@
+name: Build, Push & Deploy
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  build:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gramin-bank-svc:latest
+
+  deploy:
+    name: Deploy to Oracle VM
+    needs: build      # ⬅ ensures deploy runs ONLY AFTER build job is done
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run deploy.sh on VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/app
+            chmod +x deploy.sh
+            ./deploy.sh
