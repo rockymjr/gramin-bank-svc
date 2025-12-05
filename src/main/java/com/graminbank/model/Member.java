@@ -44,6 +44,18 @@ public class Member {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @Column(name = "is_blocked")
+    private Boolean isBlocked = false;
+
+    @Column(name = "blocked_until")
+    private LocalDateTime blockedUntil;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "last_failed_login")
+    private LocalDateTime lastFailedLogin;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -62,5 +74,34 @@ public class Member {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Helper method to check if user is currently blocked
+    public boolean isCurrentlyBlocked() {
+        if (!Boolean.TRUE.equals(isBlocked)) {
+            return false;
+        }
+        if (blockedUntil == null) {
+            return false;
+        }
+        return LocalDateTime.now().isBefore(blockedUntil);
+    }
+
+    // Helper method to increment failed attempts
+    public void incrementFailedAttempts() {
+        this.failedLoginAttempts = (this.failedLoginAttempts == null ? 0 : this.failedLoginAttempts) + 1;
+        this.lastFailedLogin = LocalDateTime.now();
+
+        // Block after 3 failed attempts
+        if (this.failedLoginAttempts >= 3) {
+            this.isBlocked = true;
+            this.blockedUntil = LocalDateTime.now().plusDays(1);
+        }
+    }
+
+    // Helper method to reset failed attempts on successful login
+    public void resetFailedAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lastFailedLogin = null;
     }
 }

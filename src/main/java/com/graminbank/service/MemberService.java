@@ -32,9 +32,11 @@ public class MemberService {
         member.setFirstName(request.getFirstName());
         member.setLastName(request.getLastName());
         member.setPhone(request.getPhone());
-        member.setPin(request.getPin());  // NEW
+        member.setPin(request.getPin());
         member.setJoiningDate(LocalDate.now());
         member.setIsActive(true);
+        member.setIsBlocked(false);
+        member.setFailedLoginAttempts(0);
 
         Member savedMember = memberRepository.save(member);
         return convertToResponse(savedMember);
@@ -70,6 +72,7 @@ public class MemberService {
         member.setPhone(request.getPhone());
         member.setPin(request.getPin());
         member.setIsOperator(request.getIsOperator());
+
         Member updatedMember = memberRepository.save(member);
         return convertToResponse(updatedMember);
     }
@@ -82,17 +85,20 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    private MemberResponse convertToResponse(Member member) {
-        MemberResponse response = new MemberResponse();
-        response.setId(member.getId());
-        response.setFirstName(member.getFirstName());
-        response.setLastName(member.getLastName());
-        response.setPhone(member.getPhone());
-        response.setJoiningDate(member.getJoiningDate());
-        response.setIsActive(member.getIsActive());
-        response.setIsOperator(member.getIsOperator());
-        response.setPin(member.getPin());
-        return response;
+    @Transactional
+    public void unblockMember(UUID id) {
+        log.info("Unblocking member: {}", id);
+
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + id));
+
+        member.setIsBlocked(false);
+        member.setBlockedUntil(null);
+        member.setFailedLoginAttempts(0);
+        member.setLastFailedLogin(null);
+
+        memberRepository.save(member);
+        log.info("Member {} unblocked successfully", id);
     }
 
     @Transactional
@@ -106,5 +112,21 @@ public class MemberService {
 
         member.setPin(request.getNewPin());
         memberRepository.save(member);
+    }
+
+    private MemberResponse convertToResponse(Member member) {
+        MemberResponse response = new MemberResponse();
+        response.setId(member.getId());
+        response.setFirstName(member.getFirstName());
+        response.setLastName(member.getLastName());
+        response.setPhone(member.getPhone());
+        response.setJoiningDate(member.getJoiningDate());
+        response.setIsActive(member.getIsActive());
+        response.setIsOperator(member.getIsOperator());
+        response.setPin(member.getPin());
+        response.setIsBlocked(member.isCurrentlyBlocked());
+        response.setBlockedUntil(member.getBlockedUntil());
+        response.setFailedLoginAttempts(member.getFailedLoginAttempts());
+        return response;
     }
 }

@@ -1,6 +1,5 @@
 package com.graminbank.service;
 
-
 import com.graminbank.dto.request.MemberLoginRequest;
 import com.graminbank.dto.response.DepositResponse;
 import com.graminbank.dto.response.LoanResponse;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,17 +35,59 @@ public class MemberAuthService {
     private final DepositRepository depositRepository;
     private final LoanRepository loanRepository;
     private final JwtUtil jwtUtil;
+    private final LoginAttemptService loginAttemptService; // NEW: Inject the helper service
 
     public MemberAuthResponse authenticate(MemberLoginRequest request) {
         Member member = memberRepository.findByPhoneAndIsActiveTrue(request.getPhone())
                 .orElseThrow(() -> new AuthenticationException("Invalid phone number or member not active"));
 
+        // Check if member is blocked
+        if (member.isCurrentlyBlocked()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+            String blockedUntilStr = member.getBlockedUntil().format(formatter);
+            throw new AuthenticationException(
+                    "Account is blocked due to multiple failed login attempts. " +
+                            "Please contact admin or try again after " + blockedUntilStr
+            );
+        }
+
         if (member.getPin() == null || member.getPin().isEmpty()) {
             throw new AuthenticationException("PIN not set for this member. Please contact admin.");
         }
 
+        // Check PIN
         if (!member.getPin().equals(request.getPin())) {
-            throw new AuthenticationException("Invalid PIN");
+            // Record failed attempt in separate transaction (will commit even if we throw exception)
+            try {
+                loginAttemptService.recordFailedAttempt(member.getId());
+            } catch (Exception e) {
+                log.error("Error recording failed login attempt for member: {}", member.getId(), e);
+            }
+
+            // Reload member to get updated attempt count from database
+            member = loginAttemptService.getMember(member.getId());
+
+            int remainingAttempts = Math.max(0, 3 - member.getFailedLoginAttempts());
+
+            if (member.isCurrentlyBlocked()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+                String blockedUntilStr = member.getBlockedUntil().format(formatter);
+                throw new AuthenticationException(
+                        "Invalid PIN. Account is now blocked until " + blockedUntilStr +
+                                ". Please contact admin to unblock."
+                );
+            }
+
+            throw new AuthenticationException(
+                    "Invalid PIN. " + remainingAttempts + " attempt(s) remaining before account is blocked."
+            );
+        }
+
+        // Successful login - reset failed attempts in separate transaction
+        try {
+            loginAttemptService.recordSuccessfulLogin(member.getId());
+        } catch (Exception e) {
+            log.error("Error recording successful login for member: {}", member.getId(), e);
         }
 
         String token = jwtUtil.generateToken("MEMBER_" + member.getId().toString());
@@ -64,8 +106,10 @@ public class MemberAuthService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-        List<DepositResponse> deposits = depositRepository.findByMemberId(memberId).stream().map(DepositMapper::convertToResponseWithCurrentInterest).toList();
-        List<LoanResponse> loans = loanRepository.findByMemberId(memberId).stream().map(LoanMapper::convertToResponseWithCurrentInterest).toList();
+        List<DepositResponse> deposits = depositRepository.findByMemberId(memberId).stream()
+                .map(DepositMapper::convertToResponseWithCurrentInterest).toList();
+        List<LoanResponse> loans = loanRepository.findByMemberId(memberId).stream()
+                .map(LoanMapper::convertToResponseWithCurrentInterest).toList();
 
         MemberDashboardResponse response = new MemberDashboardResponse();
         response.setMemberName(member.getFirstName() + " " + member.getLastName());

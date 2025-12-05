@@ -59,4 +59,11 @@ public class AdminMemberController {
         memberService.deactivateMember(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/unblock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unblockMember(@PathVariable UUID id) {
+        memberService.unblockMember(id);
+        return ResponseEntity.ok().build();
+    }
 }
